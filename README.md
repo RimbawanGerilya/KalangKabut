@@ -38,15 +38,16 @@ Mobile controls were tested with emulated touch events in portrait and landscape
 
 ## Haze encounters (milestone 4)
 
-Five quiet, non-combat encounters use six low-resolution billboard sprites:
+Six quiet, non-combat encounters use seven low-resolution billboard sprites:
 
 - An ordinary person beside the main road resolves into a young papaya plant as you approach. Once discovered, the plant stays.
 - A six-legged bearded pig appears in the back lane. It fades when centered in your view and returns in peripheral vision.
 - A slightly too-tall fish owl perches on a shop roof. It can disappear after you look away.
 - A hand rises from a dirt yard, then sinks and fades when approached.
 - An elderly resident sits on a stool in the eastern lane. Looking away after observing her can leave the spot empty.
+- Tung Tung Tung Sahur stands behind the fuel stop with his wooden bat. Three subdued, spatially panned wooden knocks announce a nearby sighting. He fades on close approach or after you look away.
 
-These are perceptual anomalies. They do not attack, damage the player, trigger a jump scare, or add a sanity meter. Their state pauses with the game. Every sprite follows the existing fog and camera cutoff; the entire encounter layer contains six planes (12 triangles) and a 294 KB texture sheet.
+These are perceptual anomalies. They do not attack, damage the player, trigger a jump scare, or add a sanity meter. Their state pauses with the game. Every sprite follows the existing fog and camera cutoff; the entire encounter layer contains seven planes (14 triangles), a 294 KB texture sheet, and a 35 KB Sahur sprite.
 
 Animal references: [Bornean bearded pig, Borneo Nature Foundation](https://borneonaturefoundation.org/wildlife/species-series-the-bold-bearded-pig/) and [buffy fish owl, Borneo Bird Club](https://www.borneobirdimages.com/bird/buffy_fish_owl/2146). The original generated sprites use these species as visual starting points; no reference photographs are included in the game.
 
@@ -63,3 +64,5 @@ The generated texture sheets contain fictional shop advertisements and candidate
 Offline browser checks passed for loading, movement, running, jumping and landing, pausing, collision boundaries, texture coverage, and vegetation/pole placement outside roads. Four fixed viewpoints were compared at three haze settings. The street view uses 271 draw calls at default haze, compared with 571 in the previous build, and 50 at maximum haze. These are rendering counts, not hardware frame-rate measurements. Richer vehicle geometry increases triangle count in the close pileup view.
 
 Encounter checks passed for the plant reveal, gaze fade and return, look-away disappearance, arm retreat, occlusion, pause behavior, and haze culling. The live animation loop and offline standalone also load without script errors.
+
+The Sahur encounter uses an original generated interpretation of the meme character and synthesized wooden knocks, without sampled meme audio. The cue respects the sound switch and pause state, and has a 20-second cooldown. Its placement, silhouette proportions, three audio pulses, occlusion, disappearance, and haze culling passed browser checks.
