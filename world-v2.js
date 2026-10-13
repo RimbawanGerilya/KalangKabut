@@ -3,7 +3,7 @@ import {rand,rng,canvasTexture,wornSign,adTexture,cableTexture,plantTexture,stri
 import {surfaceTexture,roadStripe,fuelFace,candidateTexture,vehiclePanel} from './detail-textures.js';
 import {carCabin,carBody,truckCabin,beveledBox} from './vehicle-v3.js';
 
-export function createWorld(scene,tiles,foliage,props){
+export function createWorld(scene,tiles,foliage,props,reserved=[]){
  const colliders=[],billboards=[],plantRecords=[],poleRecords=[],cableRecords=[],roadRects=[],compounds=[];
  const mat=(map,color='#ffffff',alpha=false)=>new THREE.MeshLambertMaterial({map,color,side:THREE.DoubleSide,alphaTest:alpha?.4:0});
  const tile=(i,rx=1,ry=1)=>{const t=tiles[i].clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rx,ry);t.needsUpdate=true;return t};
@@ -113,7 +113,7 @@ export function createWorld(scene,tiles,foliage,props){
  vehicle(2.4,44.6,Math.PI+.25,'truck','#648177');vehicle(-1.7,44,Math.PI-.65,'car','#ada997',.1);vehicle(-3,49,Math.PI+.06,'van','#848a9c');vehicle(.8,50,Math.PI-.2,'car','#8c6b42');
  // Alpha plants: scatter only where the complete sprite footprint clears asphalt.
  const plantMats=Array.from({length:8},(_,i)=>mat(foliage?.[i]??plantTexture(i%6),'#c2c3ae',true));plantMats.forEach(m=>{m.alphaTest=.32});
- function plant(x,z,type,h,w,checkRoad=true){const aspect=plantMats[type].map.userData.cutoutAspect;if(aspect)w=h*aspect;if(checkRoad&&onRoad(x,z,w*.45+.35))return false;if(x>-23&&x<-7&&z>-27&&z<-11)return false;if(insideSolid(x,z,.35))return false;const mesh=panel(w,h,x,h/2,z,plantMats[type]);billboards.push(mesh);plantRecords.push({x,z,w,h,type});if(h>=4){surface(Math.min(w*.6,3),Math.min(w*.6,3),x,z,shadowMat,.007);if(x>boundsPlaceholder.x0&&x<boundsPlaceholder.x1&&z>-52&&z<52){const r=type===1?.18:.15;colliders.push({x0:x-r,x1:x+r,z0:z-r,z1:z+r})}}return true}
+ function plant(x,z,type,h,w,checkRoad=true){const aspect=plantMats[type].map.userData.cutoutAspect;if(aspect)w=h*aspect;if(reserved.some(s=>s.r>0&&Math.hypot(x-s.x,z-s.z)<s.r+w*.16))return false;if(checkRoad&&onRoad(x,z,w*.45+.35))return false;if(x>-23&&x<-7&&z>-27&&z<-11)return false;if(insideSolid(x,z,.35))return false;const mesh=panel(w,h,x,h/2,z,plantMats[type]);billboards.push(mesh);plantRecords.push({x,z,w,h,type});if(h>=4){surface(Math.min(w*.6,3),Math.min(w*.6,3),x,z,shadowMat,.007);if(x>boundsPlaceholder.x0&&x<boundsPlaceholder.x1&&z>-52&&z<52){const r=type===1?.18:.15;colliders.push({x0:x-r,x1:x+r,z0:z-r,z1:z+r})}}return true}
  const boundsPlaceholder={x0:-42,x1:43};
  for(let i=0;i<410;i++){const edge=i%4;let x,z;if(edge<2){x=(edge===0?-1:1)*(42.8+rand()*13);z=-62+rand()*124}else{x=-55+rand()*110;z=(edge===2?-1:1)*(55+rand()*13)}if(Math.abs(x)<8.5)continue;plant(x,z,i%7===0?1:i%9===0?3:0,8+rand()*10,7+rand()*7)}
  const rr=rng(31);for(let i=0;i<220;i++){const x=-41+rr()*83,z=-45+rr()*90,tall=i%4===0;plant(x,z,tall?([0,2,3,6][Math.floor(i/4)%4]):(i%3?4:7),tall?4+rr()*4.5:.8+rr()*1.7,tall?3.2:1.2+rr()*1.2)}
