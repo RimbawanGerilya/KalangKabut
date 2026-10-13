@@ -1,0 +1,27 @@
+import * as THREE from './assets/three.module.js';
+
+// FogExp2 transmittance is exp(-(density * viewDepth)^2). End the frustum
+// where <0.7% of the original surface contrast survives the haze.
+export function hazeDrawDistance(density){return THREE.MathUtils.clamp(2.23/Math.max(density,.001),12,96)}
+
+function mergeGeometry(items){
+ let vertices=0,indices=0;for(const item of items){vertices+=item.geometry.attributes.position.count;indices+=item.geometry.index?.count??item.geometry.attributes.position.count}
+ const position=new Float32Array(vertices*3),normal=new Float32Array(vertices*3),uv=new Float32Array(vertices*2),index=new Uint32Array(indices);let vo=0,io=0;const point=new THREE.Vector3(),n=new THREE.Vector3(),nm=new THREE.Matrix3();
+ for(const mesh of items){const g=mesh.geometry,p=g.attributes.position,ns=g.attributes.normal,us=g.attributes.uv;nm.getNormalMatrix(mesh.matrixWorld);for(let i=0;i<p.count;i++){point.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);n.fromBufferAttribute(ns,i).applyMatrix3(nm).normalize();position.set([point.x,point.y,point.z],(vo+i)*3);normal.set([n.x,n.y,n.z],(vo+i)*3);uv.set([us?.getX(i)??0,us?.getY(i)??0],(vo+i)*2)}const count=g.index?.count??p.count;for(let i=0;i<count;i++)index[io++]=vo+(g.index?.getX(i)??i);vo+=p.count}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(position,3));g.setAttribute('normal',new THREE.BufferAttribute(normal,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setIndex(new THREE.BufferAttribute(index,1));g.computeBoundingBox();g.computeBoundingSphere();return g;
+}
+
+export function createRenderBudget(scene,world,camera){
+ scene.updateMatrixWorld(true);const originalPlants=new Set(world.billboards);const groups=new Map(),staticBatches=[],foliageBatches=[];const cellSize=16;
+ const boxes=new Map();let originalMeshes=0;
+ scene.traverse(mesh=>{if(!mesh.isMesh||originalPlants.has(mesh))return;originalMeshes++;if(Array.isArray(mesh.material))return;const box=new THREE.Box3().setFromObject(mesh);boxes.set(mesh,box);const center=box.getCenter(new THREE.Vector3());const large=box.max.x-box.min.x>45||box.max.z-box.min.z>45;const key=`${large?'large':Math.floor(center.x/cellSize)+','+Math.floor(center.z/cellSize)}:${mesh.material.uuid}`;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(mesh)});
+ for(const items of groups.values()){const geometry=mergeGeometry(items),mesh=new THREE.Mesh(geometry,items[0].material);mesh.name='static-batch';scene.add(mesh);for(const item of items)item.removeFromParent();staticBatches.push({mesh,box:geometry.boundingBox.clone()})}
+ for(const plant of originalPlants)plant.removeFromParent();
+ const plantGroups=new Map();for(let i=0;i<world.plantRecords.length;i++){const p=world.plantRecords[i],key=`${Math.floor(p.x/cellSize)},${Math.floor(p.z/cellSize)}:${p.type}`;if(!plantGroups.has(key))plantGroups.set(key,[]);plantGroups.get(key).push({record:p,material:world.billboards[i].material})}
+ const unitPlane=new THREE.PlaneGeometry(1,1);const dummy=new THREE.Object3D();
+ for(const plants of plantGroups.values()){const mesh=new THREE.InstancedMesh(unitPlane,plants[0].material,plants.length);mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);mesh.name='foliage-batch';const box=new THREE.Box3();for(let i=0;i<plants.length;i++){const p=plants[i].record;dummy.position.set(p.x,p.h/2,p.z);dummy.scale.set(p.w,p.h,1);dummy.rotation.set(0,0,0);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);const r=p.w*.51;box.expandByPoint(new THREE.Vector3(p.x-r,0,p.z-r));box.expandByPoint(new THREE.Vector3(p.x+r,p.h,p.z+r))}mesh.boundingBox=box.clone();mesh.boundingSphere=box.getBoundingSphere(new THREE.Sphere());scene.add(mesh);foliageBatches.push({mesh,box,plants,lastX:NaN,lastZ:NaN})}
+ const frustum=new THREE.Frustum(),vp=new THREE.Matrix4();const stats={originalMeshes:originalMeshes+originalPlants.size,staticBatches:staticBatches.length,foliageBatches:foliageBatches.length,totalTrees:world.plantRecords.filter(p=>p.h>=4).length,visibleStatic:0,visibleFoliageBatches:0,updatedPlants:0,drawDistance:0};
+ function setDensity(density){camera.far=hazeDrawDistance(density);camera.updateProjectionMatrix();stats.drawDistance=camera.far}
+ function update(){camera.updateMatrixWorld();vp.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);frustum.setFromProjectionMatrix(vp);stats.visibleStatic=0;stats.visibleFoliageBatches=0;stats.updatedPlants=0;for(const batch of staticBatches){batch.mesh.visible=frustum.intersectsBox(batch.box);if(batch.mesh.visible)stats.visibleStatic++}for(const batch of foliageBatches){const wasVisible=batch.mesh.visible;batch.mesh.visible=frustum.intersectsBox(batch.box);if(!batch.mesh.visible)continue;stats.visibleFoliageBatches++;if(wasVisible&&Math.abs(batch.lastX-camera.position.x)<.02&&Math.abs(batch.lastZ-camera.position.z)<.02)continue;for(let i=0;i<batch.plants.length;i++){const p=batch.plants[i].record;dummy.position.set(p.x,p.h/2,p.z);dummy.scale.set(p.w,p.h,1);dummy.rotation.set(0,Math.atan2(camera.position.x-p.x,camera.position.z-p.z),0);dummy.updateMatrix();batch.mesh.setMatrixAt(i,dummy.matrix);stats.updatedPlants++}batch.mesh.instanceMatrix.needsUpdate=true;batch.lastX=camera.position.x;batch.lastZ=camera.position.z}}
+ setDensity(scene.fog.density);return {setDensity,update,stats,staticBatches,foliageBatches};
+}
