@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#b5b09a"><title>Kalang Kabut</title><meta name="description" content="A walk through a roadside settlement in the haze."><link rel="stylesheet" href="style.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#b5b09a"><title>Kalang Kabut</title><meta name="description" content="A walk through a roadside settlement in the haze."><link rel="stylesheet" href="style.css"></head>
 <body>
 <canvas id="world" aria-label="First-person roadside settlement"></canvas><div id="grain" aria-hidden="true"></div><div id="loading">Loading...</div>
 <main id="menu" class="hidden">
@@ -7,5 +7,9 @@
  <div class="settings"><label>Haze <input id="haze" type="range" min="22" max="180" value="39"><span id="haze-value">39</span></label><label>Resolution <select id="resolution"><option value="540">540p</option><option value="720" selected>720p</option><option value="900">900p</option></select></label><label><input id="sound" type="checkbox" checked> Sound</label><label><input id="bob" type="checkbox" checked> Walking motion</label></div>
 </main>
 <div id="hud" class="hidden"><button id="pause" type="button">Esc: pause</button></div><div id="error" class="hidden" role="alert"></div>
+<div id="touch-controls" class="hidden" aria-label="Touch controls">
+ <div id="move-pad" role="group" aria-label="Walking joystick"><span id="move-knob"></span></div>
+ <div class="touch-actions"><button id="touch-run" type="button" aria-pressed="false">Run</button><button id="touch-jump" type="button">Jump</button></div>
+</div>
 <script type="module" src="main.js"></script>
 </body></html>

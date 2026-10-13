@@ -4,7 +4,7 @@ A low-poly walking prototype set in a haze-covered Indonesian roadside settlemen
 
 **[Play in your browser](https://rimbawangerilya.github.io/KalangKabut/)**
 
-Use a desktop browser with WebGL enabled. Click **Walk** to capture the mouse.
+Use a browser with WebGL enabled. Click or tap **Walk** to begin. Desktop controls capture the mouse; touch controls work without pointer lock.
 
 | Control | Action |
 | --- | --- |
@@ -15,6 +15,17 @@ Use a desktop browser with WebGL enabled. Click **Walk** to capture the mouse.
 | Esc | Pause and release mouse |
 
 The pause menu includes haze, rendering resolution, sound, and walking motion controls.
+
+## Touch controls
+
+- Left joystick: walk, with proportional speed and diagonal movement.
+- Drag the right side of the view: look around. Movement and looking work together with two fingers.
+- Run: toggle faster movement. Jump: tap while moving or standing.
+- Pause: open settings or stop the walk.
+
+Portrait and landscape layouts are supported, including screen safe areas. Touch devices start at 540p; resolution remains adjustable. Releasing or cancelling a gesture clears movement. Pausing, rotating the screen, or switching away resets touch input. Keyboard and mouse controls remain available.
+
+Mobile controls were tested with emulated touch events in portrait and landscape, including simultaneous move/look, run speed, jump during movement, touch cancellation, pause/resume, and lost focus. Physical phone testing remains to be done.
 
 ## Visual milestone 3
 
